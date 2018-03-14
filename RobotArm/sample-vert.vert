@@ -8,7 +8,7 @@ layout( std140, set = 0, binding = 0 ) uniform matBuf
         mat4 uModelMatrix;
         mat4 uViewMatrix;
         mat4 uProjectionMatrix;
-	mat3 uNormalMatrix;
+	mat4 uNormalMatrix;
 } Matrices;
 
 layout( std140, set = 1, binding = 0 ) uniform lightBuf
@@ -28,7 +28,8 @@ layout( push_constant ) uniform arm
 	mat4  armMatrix;
 	vec3  armColor;
 	float armScale;		// scale factor in x
-} RobotArm
+	int which;
+} RobotArm;
 
 // opaque must be outside of a uniform block:
 // also, can't specify packing
@@ -48,11 +49,16 @@ layout ( location = 2 ) out vec2 vTexCoord;
 void
 main( ) 
 {
+	vec3 bVertex = aVertex;
+	bVertex.x += 1.;
+	bVertex.x *= RobotArm.armScale;
+	bVertex.z += 2.*RobotArm.which;
 
-	mat4 PVM = Matrices.uProjectionMatrix * Matrices.uViewMatrix * Matrices.uModelMatrix;
-	gl_Position = PVM * vec4( aVertex, 1. );
+	mat4 PVM = Matrices.uProjectionMatrix * Matrices.uViewMatrix * Matrices.uModelMatrix *RobotArm.armMatrix;
+	gl_Position = PVM * vec4( bVertex, 1. );
 
-	vNormal   = Matrices.uNormalMatrix * aNormal;
-	vColor    = aColor;
+	//vNormal   = Matrices.uNormalMatrix * aNormal;
+	vNormal    = normalize( vec3( Matrices.uNormalMatrix * vec4(aNormal, 1.) ) );
+	vColor    = RobotArm.armColor;
 	vTexCoord = aTexCoord;
 }
